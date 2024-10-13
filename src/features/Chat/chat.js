@@ -1,58 +1,69 @@
 import React, { useState, useEffect, useRef } from "react";
 import io from "socket.io-client";
 
-const ChatScreen = () => {
+const ChatScreen = ({ sessionId }) => {
   const [messages, setMessages] = useState([]);
   const [messageInput, setMessageInput] = useState("");
-  const activeUser = { id: 1 }; 
-  const sessionId = "1234"; 
-  const messagesEndRef = useRef(null); // Reference for auto-scrolling
+  const activeUser = { id :localStorage.getItem('userId') };
+  const messagesEndRef = useRef(null);
+  const socketRef = useRef(null); 
 
   useEffect(() => {
-    const socket = io("http://localhost:1337"); 
+    
+    socketRef.current = io('http://localhost:1337', {
+      transports: ['polling']
+    });
 
-    socket.emit("joinSession", sessionId);
+    socketRef.current.on('connect', () => {
+      console.log('Connected to server');
+      
+      socketRef.current.emit('joinSession', { sessionId, userId: activeUser.id });
+    });
 
-    // Load messages from local storage
-    const storedMessages = JSON.parse(localStorage.getItem(`messages-${sessionId}`)) || [];
-    setMessages(storedMessages);
+    socketRef.current.on('connect_error', (error) => {
+      console.error('Connection Error:', error);
+    });
 
-    // Listen for incoming messages
-    socket.on("message", (data) => {
-      const newMessage = {
-        id: messages.length + 1,
-        content: data.content,
-        timestamp: new Date().toISOString(),
-        senderId: 2, 
-      };
+    
+    socketRef.current.on('message', (data) => {
+      console.log('Received message:', data);
       setMessages((prevMessages) => {
-        const updatedMessages = [...prevMessages, newMessage];
+        const updatedMessages = [...prevMessages, data];
         localStorage.setItem(`messages-${sessionId}`, JSON.stringify(updatedMessages));
         return updatedMessages;
       });
     });
 
+    
+    const storedMessages = JSON.parse(localStorage.getItem(`messages-${sessionId}`)) || [];
+    setMessages(storedMessages);
+
+    
     return () => {
-      socket.disconnect();
+      socketRef.current.disconnect();
     };
   }, [sessionId]);
 
   useEffect(() => {
-    // Scroll to the bottom of the messages
+    
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
   const sendMessage = () => {
     if (messageInput.trim()) {
-      const socket = io("http://localhost:1337");
-      socket.emit("message", { sessionId, content: messageInput });
-
       const newMessage = {
-        id: messages.length + 1,
+        id: Date.now(),
         content: messageInput,
         timestamp: new Date().toISOString(),
         senderId: activeUser.id,
       };
+
+      // Emit message to the server with the recipient ID set to the active user ID
+      socketRef.current.emit("message", {
+        sessionId,
+        content: messageInput,
+        recipientId: activeUser.id, 
+      });
 
       setMessages((prevMessages) => {
         const updatedMessages = [...prevMessages, newMessage];
@@ -60,18 +71,18 @@ const ChatScreen = () => {
         return updatedMessages;
       });
 
-      setMessageInput(""); 
+      setMessageInput("");
     }
   };
 
   return (
-    <div className="flex flex-col h-[80vh] bg-gray-200 rounded-lg overflow-hidden"> {/* Increased height to 80vh */}
+    <div className="flex flex-col h-[80vh] bg-gray-200 rounded-lg overflow-hidden">
       <div className="flex-1 p-4 overflow-y-auto">
         {messages.map((item) => (
           <div
-            key={item.id.toString()}
+            key={item.id}
             className={`my-2 p-3 rounded-lg max-w-[75%] transition-all duration-200 ${
-              item.senderId === activeUser.id
+              !item.server
                 ? "bg-blue-500 text-white self-end ml-auto"
                 : "bg-white text-black self-start"
             }`}
@@ -82,7 +93,6 @@ const ChatScreen = () => {
             </span>
           </div>
         ))}
-        {/* Ref for scrolling to the last message */}
         <div ref={messagesEndRef} />
       </div>
       <div className="flex items-center bg-white p-3 border-t border-gray-300">

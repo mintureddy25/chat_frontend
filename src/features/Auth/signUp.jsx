@@ -1,5 +1,9 @@
 import { useState } from "react";
 import { useUserSignupMutation } from "../../app/services/authApi";
+import { useDispatch } from 'react-redux';
+import { setCredentials } from "../../utils/authSlice";
+import { useNavigate } from "react-router-dom";
+
 
 export default function Singup() {
   const [userData, setuserData] = useState({
@@ -8,6 +12,8 @@ export default function Singup() {
     password: "",
   });
   const [error, setError] = useState("");
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
 
   const [
     userSignup,
@@ -31,9 +37,12 @@ export default function Singup() {
       const response = await userSignup(JSON.stringify(userData)).unwrap();
       if (response) {
         const { jwt, user } = response;
-        //dispatch(setCredentials(res));
-        // Store the token in localStorage
+        dispatch(setCredentials({ ...user, token: 'hsdfbhr' }));
+
         localStorage.setItem("authToken", jwt);
+        localStorage.setItem('userId',user.id)
+        navigate("/Dashboard");
+
       }else{
         setError('Login failed');
       }
@@ -47,11 +56,6 @@ export default function Singup() {
       <div className="bg-gray-900 text-white min-h-screen p-4">
         <div className="flex min-h-full flex-1 flex-col justify-center px-6 py-12 lg:px-8">
           <div className="sm:mx-auto sm:w-full sm:max-w-sm">
-            <img
-              alt="Your Company"
-              src="https://tailwindui.com/plus/img/logos/mark.svg?color=indigo&shade=500"
-              className="mx-auto h-10 w-auto"
-            />
             <h2 className="mt-10 text-center text-2xl font-bold leading-9 tracking-tight text-white">
               Sign Up
             </h2>
@@ -59,7 +63,7 @@ export default function Singup() {
 
           <div className="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
             <form onSubmit={handSubmit} className="space-y-6">
-              <div>onCanPlay
+              <div>
                 <label
                   htmlFor="username"
                   className="block text-sm font-medium leading-6 text-white"
@@ -141,7 +145,7 @@ export default function Singup() {
             <p className="mt-10 text-center text-sm text-gray-400">
               Have an account?{" "}
               <a
-                href="#"
+                href="/"
                 className="font-semibold leading-6 text-indigo-400 hover:text-indigo-300"
               >
                 Login

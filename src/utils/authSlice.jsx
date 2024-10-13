@@ -9,10 +9,12 @@ const slice = createSlice({
         setCredentials: (state, { payload: user }) => {
             try {
                 // Save the JWT in session storage
+                console.log("mintu okay or not", user)
                 const token = jwtDecode(user.token);
                 localStorage.setItem('token', JSON.stringify(token));
                 localStorage.setItem('encodedToken', user.token);
-                localStorage.setItem('name', user.name);
+                localStorage.setItem('name', user.username);
+                localStorage.setItem('id', user.id)
 
                 state.user = user;
                 state.JWTtoken = JSON.stringify(token);
@@ -28,6 +30,7 @@ const slice = createSlice({
                 localStorage.removeItem('encodedToken');
                 localStorage.removeItem('name');
                 localStorage.removeItem("addPopup");
+                localStorage.removeItem('id')
 
                 state.user = null;
                 state.JWTtoken = null;
