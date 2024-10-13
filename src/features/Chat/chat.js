@@ -7,10 +7,11 @@ const ChatScreen = ({ sessionId }) => {
   const activeUser = { id :localStorage.getItem('userId') };
   const messagesEndRef = useRef(null);
   const socketRef = useRef(null); 
+  const url = process.env.REACT_APP_API_URL;
 
   useEffect(() => {
     
-    socketRef.current = io('http://localhost:1337', {
+    socketRef.current = io(url, {
       transports: ['polling']
     });
 

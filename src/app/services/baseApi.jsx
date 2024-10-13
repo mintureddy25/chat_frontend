@@ -1,16 +1,16 @@
 import {createApi,fetchBaseQuery} from '@reduxjs/toolkit/query/react';
 
 const rawBaseQuery = fetchBaseQuery({
-    baseUrl: 'http://localhost:1337',
+    baseUrl: process.env.REACT_APP_API_URL,
     prepareHeaders : ( headers, {getState}) => {
         headers.set('Content-Type', 'application/json');
 
         //get the token from the state if not present take from local storage
         const token = getState().JWTtoken ? getState().JWTtoken : localStorage.getItem('encodedToken');
 
-        if (token){
-            headers.set('token', token);
-        }
+        // if (token){
+        //     headers.set('token', token);
+        // }
         return headers;
 
     },
