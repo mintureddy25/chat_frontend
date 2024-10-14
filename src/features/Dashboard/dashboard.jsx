@@ -1,4 +1,4 @@
-import { CheckIcon, PlusIcon, TrashIcon } from '@heroicons/react/20/solid';
+import { PlusIcon, TrashIcon, ArrowLeftIcon } from '@heroicons/react/20/solid';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom'; 
 import ChatScreen from '../Chat/chat';
@@ -7,29 +7,25 @@ import { selectedUser, unsetCredentials } from '../../utils/authSlice';
 
 export default function Dashboard() {
     const [selectedSession, setSelectedSession] = useState(null);
-    const [sessions, setSessions] = useState(localStorage.getItem('sessions') ? JSON.parse(localStorage.getItem('sessions')): []);
+    const [sessions, setSessions] = useState(localStorage.getItem('sessions') ? JSON.parse(localStorage.getItem('sessions')) : []);
     const navigate = useNavigate();
     const dispatch = useDispatch();
     const userId = selectedUser?.id || localStorage.getItem('userId');
     const name = selectedUser?.username || localStorage.getItem('name');
 
-    if(!userId){
+    if (!userId) {
         navigate('/');
     }
 
-
-    
     useEffect(() => {
         const storedSessions = JSON.parse(localStorage.getItem('sessions')) || [];
         setSessions(storedSessions);
 
-        
         if (storedSessions.length > 0) {
             setSelectedSession(storedSessions[0]);
         }
     }, []);
 
-    
     useEffect(() => {
         localStorage.setItem('sessions', JSON.stringify(sessions));
     }, [sessions]);
@@ -61,22 +57,28 @@ export default function Dashboard() {
         navigate("/"); 
     };
 
+    // Back arrow handler
+    const handleBack = () => {
+        setSelectedSession(null);
+    };
+
     return (
         <div className="bg-gray-800 min-h-screen p-6">
             <div className="flex items-center justify-between">
-                <div className="min-w-0 flex-1">
-                    <h2 className="text-xl font-bold leading-7 text-white sm:truncate sm:text-2xl sm:tracking-tight">
-                        Hello {name}
-                    </h2>
+                <div className="flex items-center">
+                    <div className="min-w-0 flex-1">
+                        <h2 className="text-xl font-bold leading-7 text-white sm:truncate sm:text-2xl sm:tracking-tight">
+                            Hello {name}
+                        </h2>
+                    </div>
                 </div>
                 <div className="flex items-center">
                     <span className="mt-1">
                         <button
                             type="button"
-                            onClick={handleLogout} 
+                            onClick={handleLogout}
                             className="inline-flex items-center rounded-md bg-indigo-500 px-3 py-1 text-sm font-semibold text-white shadow-sm hover:bg-indigo-400"
                         >
-                           
                             Log out
                         </button>
                     </span>
@@ -123,15 +125,42 @@ export default function Dashboard() {
                         <div className={`md:hidden w-full p-4`}>
                             {selectedSession ? (
                                 <>
-                                    <h2 className="text-xl font-bold text-white">Session: {selectedSession.id}</h2>
+                                    <div className="flex items-center">
+                                        <button onClick={handleBack} className="mr-2 text-white">
+                                            <ArrowLeftIcon className="h-5 w-5" aria-hidden="true" />
+                                        </button>
+                                        <h2 className="text-xl font-bold text-white">Session: {selectedSession.id}</h2>
+                                    </div>
                                     <ChatScreen sessionId={selectedSession.id} />
                                 </>
                             ) : (
                                 <>
                                     <h2 className="text-xl font-bold text-white">Sessions</h2>
+                                    <ul className="mt-2">
+                                        {sessions.map((session) => (
+                                            <li key={session.id} className="flex justify-between p-2 cursor-pointer hover:bg-gray-700 text-white">
+                                                <span onClick={() => selectSession(session)}>
+                                                    Session: {session.id}
+                                                </span>
+                                                <button
+                                                    onClick={() => deleteSession(session.id)}
+                                                    className="ml-2 text-red-500 hover:text-red-400"
+                                                >
+                                                    <TrashIcon className="h-5 w-5" aria-hidden="true" />
+                                                </button>
+                                            </li>
+                                        ))}
+                                    </ul>
                                     <p className="text-gray-500">Select a session to start chatting.</p>
                                 </>
                             )}
+                            <button
+                                onClick={addNewSession}
+                                className="mt-4 inline-flex items-center rounded-md bg-green-500 px-3 py-1 text-sm font-semibold text-white shadow-sm hover:bg-green-400"
+                            >
+                                <PlusIcon aria-hidden="true" className="-ml-0.5 mr-1.5 h-4 w-4" />
+                                Create New Session
+                            </button>
                         </div>
                     </div>
                 </div>
